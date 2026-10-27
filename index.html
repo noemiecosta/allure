@@ -1,0 +1,102 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#15111f"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Allure"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><title>Allure</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{color-scheme:dark;--bg:#15111f;--c:#201a2e;--c2:#2c2540;--tx:#f6f2fb;--mu:#a399bd;--a:#ffb36b;--b:#b79cff;--ok:#7be0b0}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 ui-rounded,-apple-system,system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 14px) 16px calc(100px + env(safe-area-inset-bottom))}
+h1{font-size:32px;margin:6px 0 2px;letter-spacing:-.6px}h2{font-size:15px;color:var(--mu);font-weight:600;margin:24px 4px 8px}h3{margin:0 0 4px;font-size:19px}
+.card{background:var(--c);border-radius:20px;padding:16px;margin-bottom:12px}
+.hero{background:linear-gradient(150deg,#ffb36b,#b79cff);color:#1b1428;border-radius:30px 30px 30px 8px;padding:22px;margin:14px 0}
+.mu{color:var(--mu);font-size:14px}.hero .mu{color:#1b1428b0}.row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:15px;font-weight:700;font-size:16px;font-family:inherit;background:var(--a);color:#1b1428;margin-top:10px}.btn.g{background:var(--c2);color:var(--tx)}
+.step{display:flex;gap:12px;padding:10px 0;border-top:1px solid #ffffff14}.step i{flex:none;width:24px;height:24px;border-radius:8px;background:var(--c2);font:700 12px/24px ui-rounded,sans-serif;text-align:center;font-style:normal;color:var(--a)}
+.tag{display:inline-block;font-size:13px;font-weight:700;padding:3px 11px;border-radius:99px;background:#1b142822}.card .tag{background:var(--c2);color:var(--b)}
+input,select,textarea{width:100%;background:var(--c2);color:var(--tx);border:0;border-radius:12px;padding:12px;font-size:16px;font-family:inherit;margin:4px 0 10px}
+label{font-size:13px;color:var(--mu)}.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));display:flex;background:#201a2ee6;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:26px;padding:6px;z-index:3}
+#nav button{flex:1;background:0;border:0;color:var(--mu);padding:8px 0;font-weight:600;font-size:11px;font-family:inherit;border-radius:20px}#nav button.on{color:var(--a);background:#ffffff0f}#nav b{display:block;font-size:20px}
+#sh{display:none;position:fixed;inset:0;z-index:5}#sh.on{display:block}.bk{position:absolute;inset:0;background:#000b}.pn{position:absolute;left:0;right:0;bottom:0;max-height:90%;overflow:auto;background:var(--c);border-radius:26px 26px 0 0;padding:18px 16px calc(24px + env(safe-area-inset-bottom))}
+#lk{display:none;position:fixed;inset:0;background:var(--bg);z-index:9;padding:28vh 30px}
+.big{font-size:46px;font-weight:800;letter-spacing:-1.5px;line-height:1.05}.bar{height:8px;border-radius:4px;background:#1b142822;margin:12px 0 6px;overflow:hidden}.bar i{display:block;height:100%;background:#1b1428;border-radius:4px}
+.zr{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #ffffff14}.ok{color:var(--ok)}.warn{color:var(--a)}
+</style></head><body><div id="app"></div><nav id="nav"></nav><div id="sh"></div><div id="lk"></div>
+<script>
+const $=s=>document.querySelector(s),K='allure.v1',v=i=>document.getElementById(i).value;
+let S=JSON.parse(localStorage.getItem(K)||'null')||{wk:1,done:{},logs:[],weights:[],well:[],hist:[],hrmax:null,hrobs:null,p5:null,p5s:null,easy:null,pin:null};
+const save=()=>localStorage.setItem(K,JSON.stringify(S)),fmt=s=>Math.floor(Math.round(s)/60)+':'+String(Math.round(s)%60).padStart(2,'0');
+const td=()=>new Date().toISOString().slice(0,10),avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,med=a=>{a=[...a].sort((x,y)=>x-y);return a.length?a[Math.floor(a.length/2)]:null};
+const RACE=new Date('2027-10-08'),TGT=330;let tab='today',pend=null;
+const phase=w=>w<=2?'Évaluation':w<=14?'Base':w<=30?'Développement':'Spécifique HYROX';
+const hrm=()=>S.hrmax||S.hrobs||Math.round(208-.7*22);
+const P=()=>S.p5?{e:Math.max(S.easy||0,S.p5*1.2),t:S.p5*1.07,r:S.p5*.97,f:S.p5}:null;
+function build(w){
+ const p=P(),E=p?fmt(p.e)+'/km':"allure où tu peux parler en phrases (effort 3-4/10)",dl=w>2&&w%4==0,k=Math.max(0,w-3);
+ const L=Math.min(70,Math.round((25+k*2.2)*(dl?.75:1)/5)*5),wu="Échauffement : 8' marche rapide puis 5' footing très facile",cd="Retour au calme : 5' marche";
+ const ez=(m,t)=>({t,k:'Évaluation',steps:["5' marche rapide",`${m}' footing très facile : tu dois pouvoir parler`,"Note la FC moyenne et l'effort ressenti","5' marche"]});
+ const TEST={t:'Test des 12 minutes',k:'Test',test:1,steps:["10' échauffement progressif","12' à allure régulière, effort 7/10 : soutenu mais pas un sprint","Note la distance de ces 12' et la FC max","5' de retour au calme"]};
+ const B={t:'Sortie longue facile',k:'Endurance',steps:["5' marche rapide",`${L}' footing à ${E}`,"Si tu ne peux plus parler, ralentis","5' marche"]};let A;
+ if(w==1)return[ez(20,'Footing test de la parole'),ez(25,'Footing facile de 25 minutes')];
+ if(w==2)return[TEST,ez(25,'Footing facile de 25 minutes')];
+ if(!dl&&w%6==2)A=TEST;
+ else if(w<=14)A=k<4?{t:'Footing et lignes droites',k:'Technique',q:1,steps:[wu,`20' footing à ${E}`,"6 × 20'' progressives sans sprinter, récup 40'' marche",cd]}:{t:'Fartlek',k:'Qualité',q:1,steps:[wu,"10' footing",`${Math.min(8,4+Math.floor(k/2))} × (1' ${p?fmt(p.f)+'/km':'effort 6-7/10'}, 2' footing facile)`,"5' footing",cd]};
+ else if(w<=30){const j=w-15,b=j<4?[3,6]:j<8?[3,10]:[2,15];if(dl)b[0]--;A={t:'Tempo',k:'Qualité',q:1,steps:[wu,"10' footing",`${b[0]} × ${b[1]}' à ${p?fmt(p.t)+'/km':'effort 6/10'}, récup 2' trot`,"5' footing",cd]}}
+ else{let n=Math.min(8,3+Math.floor((w-31)/2));if(dl)n--;A={t:`${n} × 1 km`,k:'Spécifique',q:1,steps:[wu,"10' footing et 4 lignes droites",`${n} × 1 km à ${p?fmt(p.r)+'/km':'effort 8/10'}, récup 90'' trot lent`,"5' footing",cd]}}
+ return[A,B]}
+function ready(){const d=new Date(Date.now()-5*864e5).toISOString().slice(0,10),w=S.well.find(x=>x.date==td()),l=S.logs.filter(x=>x.date>=d).slice(-2),r=avg(l.map(x=>x.rpe)),s=avg(l.map(x=>x.sens));
+ if(w&&(w.fat>=5||w.sleep<=1))return'rest';if((w&&(w.fat>=4||w.sleep<=2))||r>=9||(s&&s<=2))return'easy';return'go'}
+function stepsH(a){return a.map((s,i)=>`<div class=step><i>${i+1}</i><div>${s}</div></div>`).join('')}
+function today(){const w=S.wk,pr=build(w),i=!S.done[w+'-0']?0:!S.done[w+'-1']?1:-1,r=ready(),dl=Math.ceil((RACE-new Date())/864e5),wl=S.well.find(x=>x.date==td())||{fat:2,sleep:3};
+ let s=pr[i],ease=i==0&&r!='go'&&s&&s.q;if(ease)s={t:'Séance allégée',k:'Allégée',steps:["5' marche","20' footing très facile, conversation facile","5' marche"]};
+ const pc=S.p5&&S.p5s&&S.p5s>TGT?Math.max(0,Math.min(100,(S.p5s-S.p5)/(S.p5s-TGT)*100)):0;
+ return`<h1>Aujourd'hui</h1><div class=mu>${new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>
+ <div class=hero><span class=tag>${phase(w)}, semaine ${w}</span><div class=big style="margin-top:10px">${S.p5?fmt(S.p5)+'/km':'À mesurer'}</div><div class=mu>${S.p5?'Allure de référence actuelle. Objectif : '+fmt(TGT)+'/km en juillet 2027':'Fais les deux premières semaines pour calculer ton allure sans estimation'}</div><div class=bar><i style="width:${pc}%"></i></div><div class=mu>HYROX dans ${dl} jours</div></div>
+ <h2>Comment tu te sens ?</h2><div class=card><div class=g2><div><label>Fatigue (1 à 5)</label><select id=fat onchange=well()>${[1,2,3,4,5].map(n=>`<option ${n==wl.fat?'selected':''}>${n}</option>`).join('')}</select></div><div><label>Sommeil (1 à 5)</label><select id=sl onchange=well()>${[1,2,3,4,5].map(n=>`<option ${n==wl.sleep?'selected':''}>${n}</option>`).join('')}</select></div></div>
+ ${r=='go'?'<div class=ok>Tout est bon pour la séance prévue.</div>':r=='easy'?'<div class=warn>Ton corps demande de lever le pied : la séance de qualité est allégée.</div>':'<div class=warn>Repos conseillé aujourd\'hui. Marche, mobilité ou sommeil.</div>'}</div>
+ <h2>Prochaine séance</h2>${s?`<div class=card><span class=tag>${s.k}</span><h3 style="margin-top:8px">${s.t}</h3>${stepsH(s.steps)}<button class=btn onclick="logForm('${w}-${i}',${s.test?1:0},'${s.k}')">Enregistrer cette séance</button></div>`:`<div class=card><h3>Semaine terminée</h3><div class=mu>Les prochaines séances arrivent. Profite pour faire ta musculation et récupérer.</div></div>`}
+ <button class="btn g" onclick="logForm(null,0,'Libre')">Ajouter une sortie libre</button>`}
+function well(){const d=td();S.well=S.well.filter(x=>x.date!=d);S.well.push({date:d,fat:+v('fat'),sleep:+v('sl')});save();show()}
+function plan(){let h='<h1>Plan</h1><div class=mu>Il avance seulement quand tu valides tes séances.</div>';
+ for(let w=S.wk;w<S.wk+6;w++){const[a,b]=build(w);h+=`<div class=card><div class=row><h3>Semaine ${w}</h3><span class=tag>${phase(w)}${w>2&&w%4==0?', allégée':''}</span></div><div class=mu>${S.done[w+'-0']?'✓ ':''}${a.t}</div><div class=mu>${S.done[w+'-1']?'✓ ':''}${b.t}</div></div>`}
+ return h+`<h2>Soyons honnêtes sur les objectifs</h2><div class=card><div class=mu>Courir 8 × 1 km à 4:00 demande une allure de référence d'environ 4:10/km, soit un 5 km autour de 21 minutes. C'est très ambitieux depuis ton niveau actuel. Le plan retest ton allure toutes les 6 semaines et ajuste la cible. Tu verras toujours où tu en es réellement. Complète avec 2 séances de musculation par semaine, et de la natation en récupération active.</div></div>`}
+function spark(a,inv){if(a.length<2)return'<div class=mu>Pas encore assez de données.</div>';const mn=Math.min(...a),mx=Math.max(...a),r=mx-mn||1;
+ return`<svg viewBox="0 0 300 70" width=100%><polyline fill=none stroke="#ffb36b" stroke-width=3 stroke-linecap=round stroke-linejoin=round points="${a.map((y,i)=>(i/(a.length-1)*296+2)+','+(inv?4+(y-mn)/r*60:64-(y-mn)/r*60)).join(' ')}"/></svg>`}
+function track(){const lg=S.logs.slice().reverse();return`<h1>Suivi</h1>
+ <h2>Allure de référence</h2><div class=card>${spark(S.hist.map(x=>x.p5),1)}<div class=mu>Plus la courbe descend, plus tu progresses.</div></div>
+ <h2>Poids (facultatif)</h2><div class=card>${spark(S.weights.slice(-12).map(x=>x.kg))}<div class=row><input id=kg type=number step=0.1 placeholder="kg"><button class=btn style="width:auto;margin:0 0 6px;padding:12px 18px" onclick="addW()">Ajouter</button></div><div class=mu>Une pesée par semaine suffit. Le poids fluctue avec le cycle et l'hydratation.</div></div>
+ <h2>Importer depuis Garmin</h2><div class=card><div class=mu>Garmin Connect (web) : ouvre l'activité, menu ⚙︎, Exporter en GPX ou TCX. Puis choisis le fichier ici.</div><input type=file accept=".gpx,.tcx" onchange="imp(this)"></div>
+ <h2>Historique</h2>${lg.length?lg.map(l=>`<div class=card><div class=row><b>${l.k}</b><span class=mu>${l.date}</span></div>${l.d.toFixed(2)} km en ${fmt(l.t)}, ${fmt(l.pace)}/km<div class=mu>${l.hr?'FC '+l.hr+' bpm, ':''}effort ${l.rpe}/10${l.n?' : '+l.n:''}</div></div>`).join(''):'<div class=card><div class=mu>Aucune séance. Enregistre la première depuis l\'onglet Aujourd\'hui.</div></div>'}`}
+const ZN=[['Z1 Récupération',.5,.6],['Z2 Endurance',.6,.7],['Z3 Tempo',.7,.8],['Z4 Seuil',.8,.9],['Z5 Maximale',.9,1]];
+function prof(){const p=P(),m=hrm(),est=!S.hrmax&&!S.hrobs;
+ return`<h1>Profil</h1><h2>Tes allures</h2><div class=card>${p?[['Footing',p.e],['Tempo',p.t],['1 km rapide',p.r]].map(x=>`<div class=zr><span>${x[0]}</span><b>${fmt(x[1])}/km</b></div>`).join(''):'<div class=mu>Aucune allure inventée : elles apparaissent après ton test des 12 minutes (semaine 2).</div>'}</div>
+ <h2>Zones de fréquence cardiaque</h2><div class=card><div class=mu>FC max : ${m} bpm${est?' (estimation par formule, à remplacer par ta vraie valeur)':''}. Les footings se font en Z2.</div>${ZN.map(z=>`<div class=zr><span>${z[0]}</span><b>${Math.round(m*z[1])} à ${Math.round(m*z[2])}</b></div>`).join('')}<label>FC max connue (facultatif)</label><input id=hm type=number placeholder="ex. 190" value="${S.hrmax||''}" onchange="S.hrmax=+this.value||null;save();show()"></div>
+ <h2>Confidentialité</h2><div class=card><div class=mu>Tout reste sur ton iPhone. Aucun compte, aucun serveur. Fais une sauvegarde de temps en temps.</div><button class="btn g" onclick="setPin()">${S.pin?'Changer le code':'Activer un code'}</button><button class="btn g" onclick="exp()">Exporter mes données</button><label style="display:block;margin-top:10px">Restaurer une sauvegarde</label><input type=file accept=".json" onchange="rest(this)"></div>
+ <h2>Santé</h2><div class=card><div class=mu>Avec un SOPK, la régularité, le sommeil, la musculation et une alimentation sans restriction extrême comptent plus que la vitesse. Parles-en à ton médecin pour ton suivi. Cette app n'est pas un avis médical.</div></div>`}
+function logForm(key,test,k){pend={key,test,k};sheet(`<h3>${test?'Test des 12 minutes':k}</h3><label>Date</label><input id=fd type=date value="${(pend.pre||{}).date||td()}"><div class=g2><div><label>${test?'Distance des 12 min (km)':'Distance (km)'}</label><input id=fk type=number step=0.01 value="${(pend.pre||{}).d||''}"></div><div><label>Durée (mm:ss)</label><input id=ft value="${test?'12:00':(pend.pre||{}).t||''}"></div><div><label>FC moyenne</label><input id=fh type=number value="${(pend.pre||{}).hr||''}"></div><div><label>FC max</label><input id=fm type=number value="${(pend.pre||{}).mx||''}"></div></div><label>Effort ressenti (1 facile, 10 maximal)</label><select id=fr>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<option ${n==5?'selected':''}>${n}</option>`).join('')}</select><label>Sensations</label><select id=fs><option value=1>1 Très dur</option><option value=2>2 Dur</option><option value=3 selected>3 Correct</option><option value=4>4 Bien</option><option value=5>5 Super</option></select><label>Notes</label><input id=fn><button class=btn onclick=saveLog()>Enregistrer</button>`)}
+const pd=s=>{const p=s.split(':').map(Number);return p.length==1?p[0]*60:p.length==2?p[0]*60+p[1]:p[0]*3600+p[1]*60+p[2]};
+function saveLog(){const d=parseFloat(v('fk').replace(',','.')),t=pd(v('ft'));if(!d||!t||isNaN(t))return alert('Indique une distance et une durée valides.');
+ const L={id:Date.now(),date:v('fd'),d,t,pace:t/d,hr:+v('fh')||null,mx:+v('fm')||null,rpe:+v('fr'),sens:+v('fs'),n:v('fn'),k:pend.k,test:pend.test};S.logs.push(L);
+ if(L.mx&&L.mx<=215&&L.mx>(S.hrobs||0))S.hrobs=L.mx;
+ if(L.test){const n=Math.max(720/d,(S.p5||9999)*.95);S.p5=Math.round(n);S.p5s=S.p5s||S.p5;S.hist.push({date:L.date,p5:S.p5})}
+ const e=S.logs.filter(x=>/Évaluation|Endurance|Technique|Libre/.test(x.k)&&x.rpe<=6&&!x.test).slice(-4).map(x=>x.pace);if(e.length>=2)S.easy=Math.round(med(e));
+ let msg='Séance enregistrée.';if(pend.key){S.done[pend.key]=L.id;const w=S.wk;
+  if(S.done[w+'-0']&&S.done[w+'-1']){const r=avg(S.logs.filter(x=>x.id==S.done[w+'-0']||x.id==S.done[w+'-1']).map(x=>x.rpe));
+   if(r>=8.5&&!build(w)[0].test){delete S.done[w+'-0'];delete S.done[w+'-1'];msg='Semaine très dure : on la refait pour consolider.'}else{S.wk++;msg='Semaine validée, bravo !'}}}
+ save();closeS();show();setTimeout(()=>alert(msg),50)}
+function addW(){const k=parseFloat(v('kg'));if(!k)return;S.weights.push({date:td(),kg:k});save();show()}
+function imp(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=parseAct(r.result);pend={key:null,test:0,k:'Libre',pre:x};logForm(null,0,'Libre')}catch(e){alert("Fichier illisible. Utilise un export GPX ou TCX.")}};r.readAsText(f)}
+function parseAct(t){const D=new DOMParser().parseFromString(t,'application/xml'),n=s=>[...D.querySelectorAll(s)].map(e=>+e.textContent);
+ if(D.querySelector('Lap')){const d=n('DistanceMeters').slice(0,D.querySelectorAll('Lap').length);const tt=n('TotalTimeSeconds'),h=n('AverageHeartRateBpm Value'),m=n('MaximumHeartRateBpm Value');
+  return{date:D.querySelector('Lap').getAttribute('StartTime').slice(0,10),d:+(d.reduce((a,b)=>a+b,0)/1000).toFixed(2),t:fmt(tt.reduce((a,b)=>a+b,0)),hr:Math.round(avg(h))||'',mx:Math.max(...m)||''}}
+ const pts=[...D.getElementsByTagName('trkpt')],hr=[...D.getElementsByTagNameNS('*','hr')].map(e=>+e.textContent);let d=0;
+ for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],R=6371e3,rad=x=>x*Math.PI/180,la=rad(a.getAttribute('lat')),lb=rad(b.getAttribute('lat')),dl=rad(b.getAttribute('lon')-a.getAttribute('lon'));d+=R*Math.acos(Math.min(1,Math.sin(la)*Math.sin(lb)+Math.cos(la)*Math.cos(lb)*Math.cos(dl)))||0}
+ const ts=[...D.getElementsByTagName('time')].map(e=>new Date(e.textContent)).filter(x=>!isNaN(x)),sec=ts.length>1?(ts[ts.length-1]-ts[0])/1000:0;
+ return{date:ts[0].toISOString().slice(0,10),d:+(d/1000).toFixed(2),t:fmt(sec),hr:Math.round(avg(hr))||'',mx:hr.length?Math.max(...hr):''}}
+function exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='allure-sauvegarde-'+td()+'.json';a.click()}
+function rest(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();show();alert('Données restaurées.')}catch(e){alert('Sauvegarde invalide.')}};r.readAsText(f)}
+async function hash(s){return[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('allure'+s)))].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function setPin(){const p=prompt('Nouveau code (4 chiffres ou plus). Laisse vide pour le désactiver.');if(p===null)return;S.pin=p?await hash(p):null;save();show()}
+function lock(){if(!S.pin)return;const l=$('#lk');l.style.display='block';l.innerHTML='<h1>Allure</h1><div class=mu>Entre ton code</div><input id=pn type=password inputmode=numeric><button class=btn onclick=unlock()>Ouvrir</button>'}
+async function unlock(){if(await hash(v('pn'))==S.pin)$('#lk').style.display='none';else alert('Code incorrect.')}
+function sheet(h){const s=$('#sh');s.innerHTML=`<div class=bk onclick=closeS()></div><div class=pn>${h}</div>`;s.classList.add('on')}const closeS=()=>$('#sh').classList.remove('on');
+function show(){$('#app').innerHTML={today,plan,track,prof}[tab]();$('#nav').innerHTML=[['today','🏃','Aujourd\'hui'],['plan','🗓️','Plan'],['track','📈','Suivi'],['prof','👤','Profil']].map(t=>`<button class="${tab==t[0]?'on':''}" onclick="tab='${t[0]}';show();scrollTo(0,0)"><b>${t[1]}</b>${t[2]}</button>`).join('')}
+show();lock();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
